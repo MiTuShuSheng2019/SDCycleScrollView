@@ -576,6 +576,14 @@ NSString * const ID = @"SDCycleScrollViewCell";
     return _totalItemsCount;
 }
 
+- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    long itemIndex = [self pageControlIndexWithCurrentCellIndex:indexPath.item];
+    if ([self.delegate respondsToSelector:@selector(cycleScrollView:willScrollToIndex:)]) {
+        [self.delegate cycleScrollView:self willScrollToIndex:itemIndex];
+    }
+}
+
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     SDCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:ID forIndexPath:indexPath];
@@ -698,6 +706,32 @@ NSString * const ID = @"SDCycleScrollViewCell";
     if (self.autoScroll) {
         [self setupTimer];
     }
+}
+
+- (void)mq_makeScrollViewScrollToIndex:(NSInteger)index animated:(BOOL)animated
+{
+    if (self.autoScroll) {
+        [self invalidateTimer];
+    }
+    if (0 == _totalItemsCount) return;
+    
+    [self mq_scrollToIndex:(int)(_totalItemsCount * 0.5 + index) animated:animated];
+    
+    if (self.autoScroll) {
+        [self setupTimer];
+    }
+}
+
+- (void)mq_scrollToIndex:(int)targetIndex animated:(BOOL)animated
+{
+    if (targetIndex >= _totalItemsCount) {
+        if (self.infiniteLoop) {
+            targetIndex = _totalItemsCount * 0.5;
+            [_mainView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:targetIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
+        }
+        return;
+    }
+    [_mainView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:targetIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:animated];
 }
 
 @end
